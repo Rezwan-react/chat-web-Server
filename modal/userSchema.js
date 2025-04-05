@@ -20,11 +20,21 @@ const userSchema = new Schema({
         type: String,
         default: ""
     },
+    otp: {
+        type: String,
+    },
+    otpExpiredAt: {
+        type: Date,
+    },
     isVarified: {
         type: Boolean,
         default: false,
     },
-});
+},
+{
+    timestamps: true
+}
+);
 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();

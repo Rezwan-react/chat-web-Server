@@ -1,6 +1,7 @@
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../modal/userSchema");
 
+
 // ================ registration part start
 const registration = async (req, res) => {
     const { fullName, email, password, avatar } = req.body;
@@ -13,13 +14,20 @@ const registration = async (req, res) => {
     const existingUser = await userSchema.findOne({ email });
     if (existingUser) res.status(400).send("Email already exist");
 
+    const randomOtp = Math.floor(Math.random() * 9000);
+
     const user = new userSchema({
         fullName,
         email,
         password,
-        avatar
+        avatar,
+        otp: randomOtp,
+        otpExpiredAt: new Date(Date.now() + 5 * 60 * 1000)
     });
     user.save();
+
+    
+
     res.status(201).send("Rgistration successful")
 }
 
