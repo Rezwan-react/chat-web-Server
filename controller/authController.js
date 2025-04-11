@@ -2,7 +2,7 @@ const sendMail = require("../helpers/mail");
 const emailVerifyTemplates = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../modal/userSchema");
-
+const jwt = require('jsonwebtoken');
 
 // ================ registration part start
 const registration = async (req, res) => {
@@ -63,16 +63,34 @@ const verifyEmailAddress = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email) return res.status(400).send("Email is required");
-    if (emailValidator(email)) res.status(400).send("Email is not valid");
-    if (!password) return res.status(400).send("Password is required");
+    if (!email) return res.status(400).send("email is required");
+    if (emailValidator(email)) res.status(400).send("email is not valid");
+    if (!password) return res.status(400).send("password is required");
 
     const existingUser = await userSchema.findOne({ email });
-
+    if (!existingUser) return res.status(400).send("user not found");
     const passCheck = await existingUser.isPasswordValid(password);
-    if (!passCheck) return res.status(400).send("Wrong password");
+    if (!passCheck) return res.status(400).send("wrong password");
+    if (!existingUser.isVarified) return res.status(400).send("email is not varified");
 
-    res.status(200).send("login Sussessfull");
+    const accessToken = jwt.sign({
+        data: {
+            email: existingUser.email,
+            id: existingUser._id
+        }
+    }, process.env.JWT_SEC, { expiresIn: '24h' });
+
+    const loggedUse = {
+        email: existingUser.email,
+        _id: existingUser._id,
+        fullName: existingUser.fullName,
+        avatar: existingUser.avatar,
+        isVarified: existingUser.isVarified,
+        createdAt: existingUser.createdAt,
+        updatedAt: existingUser.updatedAt,
+    }
+
+    res.status(200).send({ massage: "login Sussessfull", user: loggedUse, accessToken });
 
 }
 
