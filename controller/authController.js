@@ -1,5 +1,6 @@
+const generateRandomString = require("../helpers/generateRandomString");
 const sendMail = require("../helpers/mail");
-const emailVerifyTemplates = require("../helpers/templates");
+const {emailVerifyTemplates, resetPasswordTemplates} = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../modal/userSchema");
 const jwt = require('jsonwebtoken');
@@ -73,6 +74,7 @@ const login = async (req, res) => {
     if (!passCheck) return res.status(400).send("wrong password");
     if (!existingUser.isVarified) return res.status(400).send("email is not varified");
 
+    // ========================= jwt token
     const accessToken = jwt.sign({
         data: {
             email: existingUser.email,
@@ -94,4 +96,23 @@ const login = async (req, res) => {
 
 }
 
-module.exports = { registration, verifyEmailAddress, login }
+// ===================== forgat password
+const forgatPassword = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) return res.status(400).send("email is required");
+
+    const existingUser = await userSchema.findOne({ email });
+    if (!existingUser) return res.status(400).send("user not found");
+
+    const randomString = generateRandomString(30)
+    existingUser.resetPasswordId = randomString;
+    existingUser.resetPasswordExpiredAt = new Date(Date.now() + 10 * 60 * 1000)
+    existingUser.save()
+
+    sendMail(email, "Reset password",  resetPasswordTemplates, randomString)
+
+    res.send(existingUser)
+}
+
+module.exports = { registration, verifyEmailAddress, login, forgatPassword }

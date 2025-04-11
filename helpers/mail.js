@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const sendMail = async (email, subject, template, otp)=>{
+const sendMail = async (email, subject, template, random)=>{
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         secure: true, // true for port 465, false for other ports
@@ -12,10 +12,10 @@ const sendMail = async (email, subject, template, otp)=>{
 
     // send mail with defined transport object
      await transporter.sendMail({
-        from: '"on reply" ChatWeb', // sender address
-        to: email, // list of receivers
-        subject: subject, // Subject line
-        html: template(otp || "") // html body
+        from: '"on reply" ChatWeb', 
+        to: email, 
+        subject: subject, 
+        html: template(random, email) 
     });
 }
 

@@ -30,10 +30,16 @@ const userSchema = new Schema({
         type: Boolean,
         default: false,
     },
+    resetPasswordId: {
+        type: String,
+    },
+    resetPasswordExpiredAt: {
+        type: Date,
+    },
 },
-{
-    timestamps: true
-}
+    {
+        timestamps: true
+    }
 );
 
 userSchema.pre("save", async function (next) {
