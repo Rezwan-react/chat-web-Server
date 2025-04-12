@@ -70,7 +70,7 @@ const resetPasswordTemplates = (randomString, email) => {
                 We received a request to reset your password. Click the button below to create a new one:
               </p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.BASE_URL}/resetPassword/${randomString}?email=${email}" 
+                <a href="${process.env.BASE_URL}/api/v1/auth/resetPassword/${randomString}?email=${email}" 
                    style="background-color: #007BFF; color: white; text-decoration: none; padding: 14px 28px; border-radius: 6px; display: inline-block; font-weight: bold;">
                   Reset Password
                 </a>

@@ -1,6 +1,6 @@
 const generateRandomString = require("../helpers/generateRandomString");
 const sendMail = require("../helpers/mail");
-const {emailVerifyTemplates, resetPasswordTemplates} = require("../helpers/templates");
+const { emailVerifyTemplates, resetPasswordTemplates } = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../modal/userSchema");
 const jwt = require('jsonwebtoken');
@@ -64,35 +64,39 @@ const verifyEmailAddress = async (req, res) => {
 const login = async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email) return res.status(400).send("email is required");
-    if (emailValidator(email)) res.status(400).send("email is not valid");
-    if (!password) return res.status(400).send("password is required");
+    try {
+        if (!email) return res.status(400).send("email is required");
+        if (emailValidator(email)) res.status(400).send("email is not valid");
+        if (!password) return res.status(400).send("password is required");
 
-    const existingUser = await userSchema.findOne({ email });
-    if (!existingUser) return res.status(400).send("user not found");
-    const passCheck = await existingUser.isPasswordValid(password);
-    if (!passCheck) return res.status(400).send("wrong password");
-    if (!existingUser.isVarified) return res.status(400).send("email is not varified");
+        const existingUser = await userSchema.findOne({ email });
+        if (!existingUser) return res.status(400).send("user not found");
+        const passCheck = await existingUser.isPasswordValid(password);
+        if (!passCheck) return res.status(400).send("wrong password");
+        if (!existingUser.isVarified) return res.status(400).send("email is not varified");
 
-    // ========================= jwt token
-    const accessToken = jwt.sign({
-        data: {
+        // ========================= jwt token
+        const accessToken = jwt.sign({
+            data: {
+                email: existingUser.email,
+                id: existingUser._id
+            }
+        }, process.env.JWT_SEC, { expiresIn: '24h' });
+
+        const loggedUse = {
             email: existingUser.email,
-            id: existingUser._id
+            _id: existingUser._id,
+            fullName: existingUser.fullName,
+            avatar: existingUser.avatar,
+            isVarified: existingUser.isVarified,
+            createdAt: existingUser.createdAt,
+            updatedAt: existingUser.updatedAt,
         }
-    }, process.env.JWT_SEC, { expiresIn: '24h' });
 
-    const loggedUse = {
-        email: existingUser.email,
-        _id: existingUser._id,
-        fullName: existingUser.fullName,
-        avatar: existingUser.avatar,
-        isVarified: existingUser.isVarified,
-        createdAt: existingUser.createdAt,
-        updatedAt: existingUser.updatedAt,
+        res.status(200).send({ massage: "login Sussessfull", user: loggedUse, accessToken });
+    } catch (error) {
+        res.status(500).send("server error")
     }
-
-    res.status(200).send({ massage: "login Sussessfull", user: loggedUse, accessToken });
 
 }
 
@@ -100,19 +104,40 @@ const login = async (req, res) => {
 const forgatPassword = async (req, res) => {
     const { email } = req.body;
 
-    if (!email) return res.status(400).send("email is required");
+    try {
+        if (!email) return res.status(400).send("email is required");
 
-    const existingUser = await userSchema.findOne({ email });
-    if (!existingUser) return res.status(400).send("user not found");
+        const existingUser = await userSchema.findOne({ email });
+        if (!existingUser) return res.status(400).send("user not found");
 
-    const randomString = generateRandomString(30)
-    existingUser.resetPasswordId = randomString;
-    existingUser.resetPasswordExpiredAt = new Date(Date.now() + 10 * 60 * 1000)
-    existingUser.save()
+        const randomString = generateRandomString(30)
+        existingUser.resetPasswordId = randomString;
+        existingUser.resetPasswordExpiredAt = new Date(Date.now() + 10 * 60 * 1000)
+        existingUser.save()
 
-    sendMail(email, "Reset password",  resetPasswordTemplates, randomString)
+        sendMail(email, "Reset password", resetPasswordTemplates, randomString)
 
-    res.send(existingUser)
+        res.status(201).send("check email")
+    } catch (error) {
+        res.status(500).send("server error")
+    }
 }
 
-module.exports = { registration, verifyEmailAddress, login, forgatPassword }
+// ======================= Reset password
+const resetPassword = async (req, res) => {
+    const { newPassword } = req.body;
+    const randomString = req.params.randomstring;
+    const email = req.query.email;
+
+    const existingUser = await userSchema.findOne({ email, resetPasswordId: randomString, resetPasswordExpiredAt: { $gt: Date.now() } })
+    if (!existingUser) return res.status(400).send("Invalid request")
+    if (!newPassword) return res.status(400).send("input your new password")
+    existingUser.password = newPassword;
+    existingUser.resetPasswordId = null;
+    existingUser.resetPasswordExpiredAt = null;
+    existingUser.save()
+
+    res.status(200).send("reset password successfully")
+}
+
+module.exports = { registration, verifyEmailAddress, login, forgatPassword, resetPassword }
