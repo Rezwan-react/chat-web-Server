@@ -75,7 +75,7 @@ const login = async (req, res) => {
         if (!passCheck) return res.status(400).send("wrong password");
         if (!existingUser.isVarified) return res.status(400).send("email is not varified");
 
-        // ========================= jwt token
+        // ========================= jwt token part start
         const accessToken = jwt.sign({
             data: {
                 email: existingUser.email,
@@ -100,7 +100,7 @@ const login = async (req, res) => {
 
 }
 
-// ===================== forgat password
+// ===================== forgat password part start
 const forgatPassword = async (req, res) => {
     const { email } = req.body;
 
@@ -123,7 +123,7 @@ const forgatPassword = async (req, res) => {
     }
 }
 
-// ======================= Reset password
+// ======================= Reset password part start
 const resetPassword = async (req, res) => {
     const { newPassword } = req.body;
     const randomString = req.params.randomstring;
@@ -139,5 +139,18 @@ const resetPassword = async (req, res) => {
 
     res.status(200).send("reset password successfully")
 }
+// ======================== update part start
+const update = async (req, res) => {
+    const { fullName, password, avatar } = req.body;
 
-module.exports = { registration, verifyEmailAddress, login, forgatPassword, resetPassword }
+    const updatedFields = {}
+    if (fullName) updatedFields.fullName = fullName.trim();
+    if (password) updatedFields.password = password;
+    if (avatar) updatedFields.avatar = avatar;
+
+    const existingUser = await userSchema.findByIdAndUpdate("67f8d849fe95af505ccf440d", updatedFields, { new: true })
+
+    res.send(existingUser)
+}
+
+module.exports = { registration, verifyEmailAddress, login, forgatPassword, resetPassword, update }
