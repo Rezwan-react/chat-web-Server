@@ -1,9 +1,11 @@
+const cloudinary = require("../helpers/cloudinary");
 const generateRandomString = require("../helpers/generateRandomString");
 const sendMail = require("../helpers/mail");
 const { emailVerifyTemplates, resetPasswordTemplates } = require("../helpers/templates");
 const { emailValidator } = require("../helpers/validators");
 const userSchema = require("../modal/userSchema");
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 
 // ================ registration part start
 const registration = async (req, res) => {
@@ -147,6 +149,15 @@ const update = async (req, res) => {
     if (fullName) updatedFields.fullName = fullName.trim();
     if (password) updatedFields.password = password;
     if (avatar) updatedFields.avatar = avatar;
+
+    cloudinary.uploader.upload(req.file.path, (error, result) => {
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ error: 'Error uploading to Cloudinary' });
+        }
+
+        fs.unlinkSync(req.file.path)
+    })
 
     const existingUser = await userSchema.findByIdAndUpdate("67f8d849fe95af505ccf440d", updatedFields, { new: true })
 
