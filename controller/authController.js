@@ -128,40 +128,44 @@ const forgatPassword = async (req, res) => {
 // ======================= Reset password part start
 const resetPassword = async (req, res) => {
     const { newPassword } = req.body;
-    const randomString = req.params.randomstring;
-    const email = req.query.email;
+    try {
+        const randomString = req.params.randomstring;
+        const email = req.query.email;
 
-    const existingUser = await userSchema.findOne({ email, resetPasswordId: randomString, resetPasswordExpiredAt: { $gt: Date.now() } })
-    if (!existingUser) return res.status(400).send("Invalid request")
-    if (!newPassword) return res.status(400).send("input your new password")
-    existingUser.password = newPassword;
-    existingUser.resetPasswordId = null;
-    existingUser.resetPasswordExpiredAt = null;
-    existingUser.save()
+        const existingUser = await userSchema.findOne({ email, resetPasswordId: randomString, resetPasswordExpiredAt: { $gt: Date.now() } })
+        if (!existingUser) return res.status(400).send("Invalid request")
+        if (!newPassword) return res.status(400).send("input your new password")
+        existingUser.password = newPassword;
+        existingUser.resetPasswordId = null;
+        existingUser.resetPasswordExpiredAt = null;
+        existingUser.save()
 
-    res.status(200).send("reset password successfully")
+        res.status(200).send("reset password successfully")
+    } catch (error) {
+        res.status(500).send("server error")
+    }
 }
 // ======================== update part start
 const update = async (req, res) => {
-    const { fullName, password, avatar } = req.body;
+    const { fullName, password } = req.body;
 
-    const updatedFields = {}
-    if (fullName) updatedFields.fullName = fullName.trim();
-    if (password) updatedFields.password = password;
-    if (avatar) updatedFields.avatar = avatar;
-
-    cloudinary.uploader.upload(req.file.path, (error, result) => {
-        if (error) {
-            console.log(error);
-            return res.status(500).json({ error: 'Error uploading to Cloudinary' });
+    try {
+        const updatedFields = {}
+        if (fullName) updatedFields.fullName = fullName.trim();
+        if (password) updatedFields.password = password;
+        if (req.file.path) {
+            const result = await cloudinary.uploader.upload(req.file.path)
+            updatedFields.avatar = result.url;
+            fs.unlinkSync(req.file.path)
         }
 
-        fs.unlinkSync(req.file.path)
-    })
+        const existingUser = await userSchema.findByIdAndUpdate("67f8d849fe95af505ccf440d", updatedFields, { new: true })
 
-    const existingUser = await userSchema.findByIdAndUpdate("67f8d849fe95af505ccf440d", updatedFields, { new: true })
+        res.status(200).send(existingUser)
+    } catch (error) {
+        res.status(500).send("server error")
+    }
 
-    res.send(existingUser)
 }
 
 module.exports = { registration, verifyEmailAddress, login, forgatPassword, resetPassword, update }
