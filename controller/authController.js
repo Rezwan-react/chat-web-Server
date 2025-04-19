@@ -150,16 +150,19 @@ const update = async (req, res) => {
     const { fullName, password } = req.body;
 
     try {
-        const updatedFields = {}
-        if (fullName) updatedFields.fullName = fullName.trim();
-        if (password) updatedFields.password = password;
+        const existingUser = await userSchema.findById(req.user.id)
+
+        if (fullName) existingUser.fullName = fullName.trim();
+        if (password) existingUser.password = password;
+
         if (req.file.path) {
+            await cloudinary.uploader.destroy(existingUser.avatar.split('/').pop().split('.')[0])
             const result = await cloudinary.uploader.upload(req.file.path)
-            updatedFields.avatar = result.url;
+            existingUser.avatar = result.url;
             fs.unlinkSync(req.file.path)
         }
 
-        const existingUser = await userSchema.findByIdAndUpdate(req.user.id, updatedFields, { new: true })
+        existingUser.save()
 
         res.status(200).send(existingUser)
     } catch (error) {
