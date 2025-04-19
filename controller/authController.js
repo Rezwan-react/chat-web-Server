@@ -159,7 +159,7 @@ const update = async (req, res) => {
             fs.unlinkSync(req.file.path)
         }
 
-        const existingUser = await userSchema.findByIdAndUpdate("67f8d849fe95af505ccf440d", updatedFields, { new: true })
+        const existingUser = await userSchema.findByIdAndUpdate(req.user.id, updatedFields, { new: true })
 
         res.status(200).send(existingUser)
     } catch (error) {
