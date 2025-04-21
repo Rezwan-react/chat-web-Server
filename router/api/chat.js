@@ -4,6 +4,6 @@ const { createConversation, conversationList } = require("../../controller/creat
 const router = express.Router();
 
 router.post("/createconversation", authMiddleware, createConversation)
-router.post("/conversationlist", authMiddleware, conversationList)
+router.get("/conversationlist", authMiddleware, conversationList)
 
 module.exports = router;
