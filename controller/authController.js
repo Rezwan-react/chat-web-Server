@@ -49,24 +49,24 @@ const verifyEmailAddress = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
-    if (!email) return res.status(400).send("Invalid  email");
-    if (!otp) return res.status(400).send("Invalid otp");
+    if (!email) return res.status(400).send({error: "Invalid  email"});
+    if (!otp) return res.status(400).send({error: "Invalid otp"});
 
     const verifiedUser = await userSchema.findOne({
       email,
       otp,
       otpExpiredAt: { $gt: Date.now() },
     });
-    if (!verifiedUser) return res.status(400).send("Invalid otp");
+    if (!verifiedUser) return res.status(400).send({error: "Invalid otp"});
 
     verifiedUser.otp = null;
     verifiedUser.otpExpiredAt = null;
     verifiedUser.isVarified = true;
     verifiedUser.save();
 
-    res.status(200).send("email verified successfully");
+    res.status(200).send({success: "email verified successfully"});
   } catch (error) {
-    res.status(500).send("server error");
+    res.status(500).send({error: "server error"});
   }
 };
 
