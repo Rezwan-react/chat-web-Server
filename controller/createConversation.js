@@ -1,3 +1,4 @@
+const { emailValidator } = require("../helpers/validators");
 const conversationSchema = require("../modal/conversationSchema");
 const userSchema = require("../modal/userSchema");
 
@@ -9,6 +10,7 @@ const createConversation = async (req, res) => {
         if (!participentEmail) {
             return res.status(400).send({ error: "Participent email is required" })
         }
+        if (emailValidator(participentEmail)) res.status(400).send({ error: "email is not valid" });
         if (participentEmail === req.user.email) {
             return res.status(400).send({ error: "Try with another email" })
         }
@@ -16,6 +18,14 @@ const createConversation = async (req, res) => {
         const participentData = await userSchema.findOne({ email: participentEmail })
         if (!participentData) {
             return res.status(400).send({ error: "user not found" })
+        }
+
+        const existingParticipent = await conversationSchema.findOne({
+            $or: [{ creator: req.user.id, participent: participentData._id }, { participent: req.user.id, creator: participentData._id }]
+        })
+
+        if (existingParticipent) {
+            return res.status(400).send({ error: "Already exist" })
         }
 
         const conversation = new conversationSchema({
@@ -27,7 +37,7 @@ const createConversation = async (req, res) => {
         res.status(200).send(conversation)
 
     } catch (error) {
-        res.status(500).send("Server error")
+        res.status(500).send({ error: "Server error" })
     }
 }
 
@@ -42,7 +52,6 @@ const conversationList = async (req, res) => {
         if (!conversation) {
             return res.status(400).send({ error: " conversation not found" })
         }
-
         res.status(200).send(conversation)
 
     } catch (error) {

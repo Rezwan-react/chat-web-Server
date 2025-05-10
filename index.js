@@ -14,7 +14,6 @@ require('dotenv').config()
 const io = new Server(httpServer, {
   cors: "*"
 });
-
 dbConnect()
 
 
