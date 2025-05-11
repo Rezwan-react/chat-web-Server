@@ -50,7 +50,7 @@ const conversationList = async (req, res) => {
         }).populate("creator", "fullName avatar email").populate("participent", "fullName avatar email").populate("lastMessage")
 
         if (!conversation) {
-            return res.status(400).send({ error: " conversation not found" })
+            return res.status(400).send({ error: "conversation not found" })
         }
         res.status(200).send(conversation)
 
