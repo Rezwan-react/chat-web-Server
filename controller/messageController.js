@@ -6,18 +6,18 @@ const sendMessage = async (req, res) => {
 
         const { reciverId, content, conversationId } = req.body;
         if (!reciverId) {
-            return res.status(400).send(" reciverId required")
+            return res.status(400).send({ error: " reciverId required" })
         }
         if (!content) {
-            return res.status(400).send(" content required")
+            return res.status(400).send({ error: " content required" })
         }
         if (!conversationId) {
-            return res.status(400).send(" conversationId required")
+            return res.status(400).send({ error: " conversationId required" })
         }
 
         const existingConversation = await conversationSchema.findOne({ _id: conversationId })
         if (!existingConversation) {
-            return res.status(400).send("no conversation found")
+            return res.status(400).send({ error: "no conversation found" })
         }
 
         const message = new messageSchema({
@@ -31,11 +31,11 @@ const sendMessage = async (req, res) => {
 
         await conversationSchema.findByIdAndUpdate(existingConversation._id, { lastMessage: message })
 
-        global.io.emit("new_message", {message, conversationId: conversationId})
+        global.io.emit("new_message", { message, conversationId: conversationId })
 
         res.status(200).send({ message, conversationId: conversationId })
     } catch (error) {
-        res.status(500).send("Server error!")
+        res.status(500).send({ error: "Server error!" })
     }
 }
 
