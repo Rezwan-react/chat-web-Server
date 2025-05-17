@@ -3,8 +3,8 @@ const messageSchema = require("../modal/messageSchema");
 
 const sendMessage = async (req, res) => {
     try {
-
         const { reciverId, content, conversationId } = req.body;
+
         if (!reciverId) {
             return res.status(400).send({ error: " reciverId required" })
         }
@@ -31,9 +31,9 @@ const sendMessage = async (req, res) => {
 
         await conversationSchema.findByIdAndUpdate(existingConversation._id, { lastMessage: message })
 
-        global.io.emit("new_message", { message, conversationId: conversationId })
+        global.io.emit("new_message", message)
 
-        res.status(200).send({ message, conversationId: conversationId })
+        res.status(200).send(message)
     } catch (error) {
         res.status(500).send({ error: "Server error!" })
     }
