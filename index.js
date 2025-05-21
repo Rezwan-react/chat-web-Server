@@ -15,7 +15,10 @@ const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
   cors: "*"
 });
+global.io = io
+
 dbConnect()
+
 
 
 httpServer.listen(8000, () => {

@@ -1,6 +1,7 @@
 const conversationSchema = require("../modal/conversationSchema");
 const messageSchema = require("../modal/messageSchema");
 
+//=============== This function is used to send a message
 const sendMessage = async (req, res) => {
     try {
         const { reciverId, content, conversationId } = req.body;
@@ -38,7 +39,7 @@ const sendMessage = async (req, res) => {
         res.status(500).send({ error: "Server error!" })
     }
 }
-
+// =============== This function is used to get all messages of a conversation
 const getMessages = async (req, res) => {
 
     try {
