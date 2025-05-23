@@ -33,8 +33,11 @@ const createConversation = async (req, res) => {
             participent: participentData._id
         })
 
-        conversation.save()
-        res.status(200).send(conversation)
+        await conversation.save()
+
+        const populatedConversation = await conversation.populate([{ path: 'creator', select: 'fullName avatar email' }, { path: 'participent', select: 'fullName avatar email' }, { path: 'lastMessage' }]);
+
+        res.status(200).send(populatedConversation)
 
     } catch (error) {
         res.status(500).send({ error: "Server error" })
@@ -47,7 +50,7 @@ const conversationList = async (req, res) => {
     try {
         const conversation = await conversationSchema.find({
             $or: [{ creator: req.user.id }, { participent: req.user.id }]
-        }).populate("creator", "fullName avatar email").populate("participent", "fullName avatar email").populate("lastMessage")
+        }).populate("creator", "fullName avatar email").populate("participent", "fullName avatar email").populate("lastMessage").sort({ updatedAt: -1 })
 
         if (!conversation) {
             return res.status(400).send({ error: "conversation not found" })
