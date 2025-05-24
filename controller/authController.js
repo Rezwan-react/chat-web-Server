@@ -166,14 +166,13 @@ const resetPassword = async (req, res) => {
 // ======================== update part start
 const update = async (req, res) => {
   const { fullName, password } = req.body;
-
   try {
     const existingUser = await userSchema.findById(req.user.id);
 
     if (fullName) existingUser.fullName = fullName.trim();
     if (password) existingUser.password = password;
 
-    if (req.file.path) {
+    if (req?.file?.path) {
       await cloudinary.uploader.destroy(
         existingUser.avatar.split("/").pop().split(".")[0]
       );
