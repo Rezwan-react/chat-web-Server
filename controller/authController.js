@@ -18,11 +18,11 @@ const registration = async (req, res) => {
   try {
     if (!fullName) return res.status(400).send({ error: "Name is required" });
     if (!email) return res.status(400).send({ error: "Email is required" });
-    if (!password) return res.status(400).send({error: "Password is required"});
-    if (emailValidator(email)) res.status(400).send({error:"Email is not valid"});
+    if (!password) return res.status(400).send({ error: "Password is required" });
+    if (emailValidator(email)) res.status(400).send({ error: "Email is not valid" });
 
     const existingUser = await userSchema.findOne({ email });
-    if (existingUser) res.status(400).send({error: "Email already exist"});
+    if (existingUser) res.status(400).send({ error: "Email already exist" });
 
     const randomOtp = Math.floor(Math.random() * 9000);
 
@@ -38,9 +38,9 @@ const registration = async (req, res) => {
 
     sendMail(email, "Verify your email", emailVerifyTemplates, randomOtp);
 
-    res.status(201).send({success: "Registration susseccfull! Please verify your email."});
+    res.status(201).send({ success: "Registration susseccfull! Please verify your email." });
   } catch (error) {
-    res.status(500).send({error: "server error"});
+    res.status(500).send({ error: "server error" });
   }
 };
 
@@ -49,24 +49,24 @@ const verifyEmailAddress = async (req, res) => {
   const { email, otp } = req.body;
 
   try {
-    if (!email) return res.status(400).send({error: "Invalid  email"});
-    if (!otp) return res.status(400).send({error: "Invalid otp"});
+    if (!email) return res.status(400).send({ error: "Invalid  email" });
+    if (!otp) return res.status(400).send({ error: "Invalid otp" });
 
     const verifiedUser = await userSchema.findOne({
       email,
       otp,
       otpExpiredAt: { $gt: Date.now() },
     });
-    if (!verifiedUser) return res.status(400).send({error: "Invalid otp"});
+    if (!verifiedUser) return res.status(400).send({ error: "Invalid otp" });
 
     verifiedUser.otp = null;
     verifiedUser.otpExpiredAt = null;
     verifiedUser.isVarified = true;
     verifiedUser.save();
 
-    res.status(200).send({success: "email verified successfully"});
+    res.status(200).send({ success: "email verified successfully" });
   } catch (error) {
-    res.status(500).send({error: "server error"});
+    res.status(500).send({ error: "server error" });
   }
 };
 
@@ -75,16 +75,16 @@ const login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    if (!email) return res.status(400).send({error: "email is required"});
-    if (emailValidator(email)) res.status(400).send({error: "email is not valid"});
-    if (!password) return res.status(400).send({error: "password is required"});
+    if (!email) return res.status(400).send({ error: "email is required" });
+    if (emailValidator(email)) res.status(400).send({ error: "email is not valid" });
+    if (!password) return res.status(400).send({ error: "password is required" });
 
     const existingUser = await userSchema.findOne({ email });
-    if (!existingUser) return res.status(400).send({error: "user not found"});
+    if (!existingUser) return res.status(400).send({ error: "user not found" });
     const passCheck = await existingUser.isPasswordValid(password);
-    if (!passCheck) return res.status(400).send({error: "wrong password"});
+    if (!passCheck) return res.status(400).send({ error: "wrong password" });
     if (!existingUser.isVarified)
-      return res.status(400).send({error: "email is not varified"});
+      return res.status(400).send({ error: "email is not varified" });
 
     // ========================= jwt token part start
     const accessToken = jwt.sign(
@@ -112,7 +112,7 @@ const login = async (req, res) => {
       .status(200)
       .send({ success: "login Sussessfull", user: loggedUse, accessToken });
   } catch (error) {
-    res.status(500).send({error: "server error"});
+    res.status(500).send({ error: "server error" });
   }
 };
 
@@ -169,14 +169,12 @@ const update = async (req, res) => {
   try {
     const existingUser = await userSchema.findById(req.user.id);
 
-    if (fullName) existingUser.fullName = fullName.trim();
+    if (fullName) existingUser.fullName = fullName.trim().split(/\s+/).join(' ');
     if (password) existingUser.password = password;
 
     if (req?.file?.path) {
-      await cloudinary.uploader.destroy(
-        existingUser.avatar.split("/").pop().split(".")[0]
-      );
-      const result = await cloudinary.uploader.upload(req.file.path);
+      if(existingUser.avatar) await cloudinary.uploader.destroy(existingUser.avatar.split('/').pop().split('.')[0]);
+      const result = await cloudinary.uploader.upload(req.file.path)
       existingUser.avatar = result.url;
       fs.unlinkSync(req.file.path);
     }
