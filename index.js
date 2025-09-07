@@ -21,6 +21,6 @@ dbConnect()
 
 
 
-httpServer.listen(8000, () => {
+httpServer.listen(5000, () => {
   console.log("Server is running")
 })
